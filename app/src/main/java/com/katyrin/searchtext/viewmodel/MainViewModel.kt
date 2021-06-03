@@ -3,15 +3,22 @@ package com.katyrin.searchtext.viewmodel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.katyrin.searchtext.*
+import com.katyrin.searchtext.App
 import com.katyrin.searchtext.data.ResultItem
+import com.katyrin.searchtext.utils.HALF_SECOND
+import com.katyrin.searchtext.utils.toWords
 import io.reactivex.Flowable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
+import java.io.BufferedReader
+import java.io.InputStream
 import java.util.*
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
-class MainViewModel : ViewModel() {
+class MainViewModel @Inject constructor(
+    private val assetsText: String
+): ViewModel() {
 
     private val _liveData: MutableLiveData<AppState> = MutableLiveData<AppState>()
     val liveData: LiveData<AppState> = _liveData
@@ -30,9 +37,11 @@ class MainViewModel : ViewModel() {
             textInput
                 .debounce(HALF_SECOND, TimeUnit.MILLISECONDS)
                 .subscribeOn(Schedulers.io())
-                .subscribe{ searchText ->
+                .subscribe({ searchText ->
                     postValueSearchResults(searchText)
-                }
+                }, {
+                    _liveData.postValue(AppState.Error(it))
+                })
         )
     }
 
@@ -51,19 +60,11 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun getAllText() {
+    fun getAssetsText() {
         _liveData.value = AppState.Loading
-        val bufferReader = App.appInstance.assets.open(FILE_NAME).bufferedReader()
-        val allText = bufferReader.use { it.readText() }
-        words = allText.toWords()
-        _liveData.value = AppState.SuccessGetText(allText)
+        words = assetsText.toWords()
+        _liveData.value = AppState.SuccessGetText(assetsText)
     }
-
-    private fun String.toWords() = trim()
-        .replace(REGEX_REPLACE.toRegex(), DELIMITER)
-        .split(REGEX_SPLIT.toRegex())
-        .filter { it.isNotEmpty() }
-        .toList()
 
     override fun onCleared() {
         super.onCleared()

@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Search Text</string>
     <string name="enter_text">Enter text</string>
+    <string name="error">Error</string>
 </resources>

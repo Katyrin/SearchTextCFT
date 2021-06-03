@@ -1,4 +1,4 @@
-package com.katyrin.searchtext
+package com.katyrin.searchtext.utils
 
 const val FILE_NAME = "myText.txt"
 const val DELIMITER = ' '.toString()
