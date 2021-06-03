@@ -1,16 +1,18 @@
 package com.katyrin.searchtext.ui
 
-import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.katyrin.searchtext.databinding.FragmentMainBinding
 import com.katyrin.searchtext.viewmodel.AppState
 import com.katyrin.searchtext.viewmodel.MainViewModel
+import io.reactivex.BackpressureStrategy
+import io.reactivex.Flowable
 
 class MainFragment : Fragment() {
 
@@ -31,7 +33,7 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         createRecyclerView()
-        setSearchEditText()
+        initViews()
         viewModel.liveData.observe(viewLifecycleOwner) {
             renderData(it)
         }
@@ -61,11 +63,23 @@ class MainFragment : Fragment() {
         binding.recyclerView.adapter = SearchAdapter()
     }
 
-    private fun setSearchEditText() {
-        binding.searchEditText.addTextChangedListener { text ->
-            viewModel.filterResult(text)
+    private fun initViews() {
+        binding.apply {
+            searchEditText.addTextChangedListener { text ->
+                filterResults(text.toString())
+            }
+            searchEditText.setOnClickListener {
+                filterResults(searchEditText.text.toString())
+            }
+            allText.setOnClickListener {
+                viewModel.clearResults()
+            }
         }
-        binding.searchEditText.addTextChangedListener {}
+    }
+
+    private fun filterResults(text: String) {
+        val textInput = Flowable.create<String>({ it.onNext(text) }, BackpressureStrategy.LATEST)
+        viewModel.filterResults(textInput)
     }
 
     companion object {

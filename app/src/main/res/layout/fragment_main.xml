@@ -48,6 +48,7 @@
             android:id="@+id/all_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:paddingTop="@dimen/edge_padding"
             android:textSize="@dimen/result_text_size" />
 
     </androidx.core.widget.NestedScrollView>
