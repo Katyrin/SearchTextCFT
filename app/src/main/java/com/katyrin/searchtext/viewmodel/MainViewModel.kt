@@ -3,66 +3,63 @@ package com.katyrin.searchtext.viewmodel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.katyrin.searchtext.App
-import com.katyrin.searchtext.data.ResultItem
 import com.katyrin.searchtext.utils.HALF_SECOND
-import com.katyrin.searchtext.utils.toWords
+import com.katyrin.searchtext.utils.ONE_SYMBOL
+import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
+import io.reactivex.Scheduler
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-import java.io.BufferedReader
-import java.io.InputStream
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class MainViewModel @Inject constructor(
-    private val assetsText: String
-): ViewModel() {
+    private val assetsText: String,
+    private val uiScheduler: Scheduler
+) : ViewModel() {
 
     private val _liveData: MutableLiveData<AppState> = MutableLiveData<AppState>()
     val liveData: LiveData<AppState> = _liveData
-
     private val disposable = CompositeDisposable()
-    private var results: MutableList<ResultItem> = mutableListOf()
-    private var words: List<String> = listOf()
-
-    fun clearResults() {
-        results.clear()
-        _liveData.value = AppState.GetSearchResults(results)
-    }
 
     fun filterResults(textInput: Flowable<String>) {
         disposable.add(
-            textInput
-                .debounce(HALF_SECOND, TimeUnit.MILLISECONDS)
+            textInput.debounce(HALF_SECOND, TimeUnit.MILLISECONDS)
                 .subscribeOn(Schedulers.io())
-                .subscribe({ searchText ->
-                    postValueSearchResults(searchText)
-                }, {
-                    _liveData.postValue(AppState.Error(it))
-                })
+                .flatMap { text -> getFlowableSource(text) }
+                .observeOn(uiScheduler)
+                .subscribe(
+                    { startEndList -> setTextState(startEndList) },
+                    { _liveData.value = AppState.Error(it) }
+                )
         )
     }
 
-    private fun postValueSearchResults(searchText: String) {
-        results.clear()
-        if (searchText.isNotBlank()) searchMatches(searchText)
-        _liveData.postValue(AppState.GetSearchResults(results))
+    private fun setTextState(startEndList: List<Pair<Int, Int>>) {
+        val count = startEndList.size
+        val textLength = assetsText.length + ONE_SYMBOL
+        if (count == textLength)
+            _liveData.value = AppState.EmptyTextState
+        else
+            _liveData.value = AppState.SuccessTextState(startEndList, count)
     }
 
-    private fun searchMatches(searchText: String) {
-        words.map { word ->
-            val wordLowerCase = word.toLowerCase(Locale.ROOT)
-            val searchTextLowerCase = searchText.toLowerCase(Locale.ROOT)
-            if (wordLowerCase.contains(searchTextLowerCase))
-                results.add(ResultItem(word))
-        }
+    private fun getFlowableSource(text: String): Flowable<List<Pair<Int, Int>>> =
+        Flowable.create(
+            { it.onNext(getMatchesStartEndPosition(text)) },
+            BackpressureStrategy.LATEST
+        )
+
+    private fun getMatchesStartEndPosition(word: String): List<Pair<Int, Int>> {
+        val startEndList: MutableList<Pair<Int, Int>> = mutableListOf()
+        val pattern = word.toLowerCase(Locale.ROOT).toRegex()
+        val matches = pattern.findAll(assetsText.toLowerCase(Locale.ROOT))
+        matches.forEach { startEndList.add(Pair(it.range.first, it.range.last + ONE_SYMBOL)) }
+        return startEndList
     }
 
     fun getAssetsText() {
-        _liveData.value = AppState.Loading
-        words = assetsText.toWords()
         _liveData.value = AppState.SuccessGetText(assetsText)
     }
 
