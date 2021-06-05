@@ -37,6 +37,9 @@ class MainFragment : Fragment() {
         requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
     }
 
+    private val _textInput = BehaviorSubject.create<String>()
+    private val textInput = _textInput.toFlowable(BackpressureStrategy.LATEST)
+
     override fun onAttach(context: Context) {
         super.onAttach(context)
         (activity as MainActivity).appComponent.inject(this)
@@ -120,9 +123,6 @@ class MainFragment : Fragment() {
             binding.textInputLayout.clearFocus()
         }
     }
-
-    private val _textInput = BehaviorSubject.create<String>()
-    private val textInput = _textInput.toFlowable(BackpressureStrategy.LATEST)
 
     private fun filterResults(text: String) {
         _textInput.onNext(text)
