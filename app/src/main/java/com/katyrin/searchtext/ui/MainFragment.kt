@@ -58,6 +58,7 @@ class MainFragment : Fragment() {
         initViews()
         viewModel.liveData.observe(viewLifecycleOwner) { renderData(it) }
         viewModel.getAssetsText()
+        viewModel.subscribeFilterResults(textInput)
     }
 
     private fun renderData(appState: AppState) {
@@ -102,14 +103,10 @@ class MainFragment : Fragment() {
     }
 
     private fun initViews() {
-        binding.searchEditText.apply {
-            addTextChangedListener { text ->
-                filterResults(text.toString())
-            }
-            setOnEditorActionListener { _, actionId, _ ->
-                hideKeyboard(actionId)
-                return@setOnEditorActionListener true
-            }
+        binding.searchEditText.addTextChangedListener { text -> _textInput.onNext(text.toString()) }
+        binding.searchEditText.setOnEditorActionListener { _, actionId, _ ->
+            hideKeyboard(actionId)
+            return@setOnEditorActionListener true
         }
     }
 
@@ -121,11 +118,6 @@ class MainFragment : Fragment() {
             )
             binding.textInputLayout.clearFocus()
         }
-    }
-
-    private fun filterResults(text: String) {
-        _textInput.onNext(text)
-        viewModel.filterResults(textInput)
     }
 
     companion object {

@@ -23,7 +23,7 @@ class MainViewModel @Inject constructor(
     val liveData: LiveData<AppState> = _liveData
     private val disposable = CompositeDisposable()
 
-    fun filterResults(textInput: Flowable<String>) {
+    fun subscribeFilterResults(textInput: Flowable<String>) {
         disposable.add(
             textInput
                 .debounce(HALF_SECOND, TimeUnit.MILLISECONDS)
