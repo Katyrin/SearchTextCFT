@@ -106,7 +106,6 @@ class MainFragment : Fragment() {
             addTextChangedListener { text ->
                 filterResults(text.toString())
             }
-            setOnClickListener { filterResults(binding.searchEditText.text.toString()) }
             setOnEditorActionListener { _, actionId, _ ->
                 hideKeyboard(actionId)
                 return@setOnEditorActionListener true

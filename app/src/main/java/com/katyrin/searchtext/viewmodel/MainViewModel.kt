@@ -25,9 +25,11 @@ class MainViewModel @Inject constructor(
 
     fun filterResults(textInput: Flowable<String>) {
         disposable.add(
-            textInput.debounce(HALF_SECOND, TimeUnit.MILLISECONDS)
+            textInput
+                .debounce(HALF_SECOND, TimeUnit.MILLISECONDS)
+                .distinctUntilChanged()
+                .switchMap { text -> getFlowableSource(text) }
                 .subscribeOn(Schedulers.computation())
-                .flatMap { text -> getFlowableSource(text) }
                 .observeOn(uiScheduler)
                 .subscribe(
                     { startEndList -> setTextState(startEndList) },
