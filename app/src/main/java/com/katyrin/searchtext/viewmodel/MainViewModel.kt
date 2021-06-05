@@ -3,6 +3,7 @@ package com.katyrin.searchtext.viewmodel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.katyrin.searchtext.repository.LocalRepository
 import com.katyrin.searchtext.utils.HALF_SECOND
 import com.katyrin.searchtext.utils.ONE_SYMBOL
 import io.reactivex.BackpressureStrategy
@@ -10,13 +11,12 @@ import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class MainViewModel @Inject constructor(
-    private val assetsText: String,
-    private val uiScheduler: Scheduler
+    private val uiScheduler: Scheduler,
+    private val localRepository: LocalRepository
 ) : ViewModel() {
 
     private val _liveData: MutableLiveData<AppState> = MutableLiveData<AppState>()
@@ -38,7 +38,7 @@ class MainViewModel @Inject constructor(
 
     private fun setTextState(startEndList: List<Pair<Int, Int>>) {
         val count = startEndList.size
-        val textLength = assetsText.length + ONE_SYMBOL
+        val textLength = localRepository.getAssetsText().length + ONE_SYMBOL
         if (count == textLength)
             _liveData.value = AppState.EmptyTextState
         else
@@ -47,20 +47,12 @@ class MainViewModel @Inject constructor(
 
     private fun getFlowableSource(text: String): Flowable<List<Pair<Int, Int>>> =
         Flowable.create(
-            { it.onNext(getMatchesStartEndPosition(text)) },
+            { it.onNext(localRepository.getMatchesStartEndPosition(text)) },
             BackpressureStrategy.LATEST
         )
 
-    private fun getMatchesStartEndPosition(word: String): List<Pair<Int, Int>> {
-        val startEndList: MutableList<Pair<Int, Int>> = mutableListOf()
-        val pattern = word.toLowerCase(Locale.ROOT).toRegex()
-        val matches = pattern.findAll(assetsText.toLowerCase(Locale.ROOT))
-        matches.forEach { startEndList.add(Pair(it.range.first, it.range.last + ONE_SYMBOL)) }
-        return startEndList
-    }
-
     fun getAssetsText() {
-        _liveData.value = AppState.SuccessGetText(assetsText)
+        _liveData.value = AppState.SuccessGetText(localRepository.getAssetsText())
     }
 
     override fun onCleared() {
