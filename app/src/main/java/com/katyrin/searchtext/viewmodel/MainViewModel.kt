@@ -28,8 +28,8 @@ class MainViewModel @Inject constructor(
             textInput
                 .debounce(HALF_SECOND, TimeUnit.MILLISECONDS)
                 .distinctUntilChanged()
-                .switchMap { text -> getFlowableSource(text) }
-                .subscribeOn(Schedulers.computation())
+                .subscribeOn(Schedulers.io())
+                .switchMapSingle(localRepository::getMatchesStartEndPosition)
                 .observeOn(uiScheduler)
                 .subscribe(
                     { startEndList -> setTextState(startEndList) },
@@ -46,12 +46,6 @@ class MainViewModel @Inject constructor(
         else
             _liveData.value = AppState.SuccessTextState(startEndList, count)
     }
-
-    private fun getFlowableSource(text: String): Flowable<List<Pair<Int, Int>>> =
-        Flowable.create(
-            { it.onNext(localRepository.getMatchesStartEndPosition(text)) },
-            BackpressureStrategy.LATEST
-        )
 
     fun getAssetsText() {
         _liveData.value = AppState.SuccessGetText(localRepository.getAssetsText())

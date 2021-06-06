@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.text.clearSpans
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
@@ -30,9 +31,15 @@ class MainFragment : Fragment() {
     @Inject
     lateinit var factory: ViewModelProvider.Factory
     private val viewModel: MainViewModel by viewModels(factoryProducer = { factory })
+
     private lateinit var binding: FragmentMainBinding
+
     private lateinit var spannable: SpannableString
-    private val spanColor by lazy { requireContext().resources.getColor(R.color.purple_200) }
+
+    private val spanColor by lazy {
+        requireContext().resources.getColor(R.color.purple_200)
+    }
+
     private val inputManager: InputMethodManager by lazy {
         requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
     }
@@ -55,6 +62,7 @@ class MainFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         initViews()
         viewModel.liveData.observe(viewLifecycleOwner) { renderData(it) }
         viewModel.getAssetsText()
