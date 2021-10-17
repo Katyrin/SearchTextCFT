@@ -2,7 +2,6 @@ package com.katyrin.searchtext
 
 import com.katyrin.searchtext.repository.LocalRepository
 import com.katyrin.searchtext.repository.LocalRepositoryImpl
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
